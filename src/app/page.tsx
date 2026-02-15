@@ -243,7 +243,7 @@ export default function Home() {
           <Card className="lg:col-span-4">
             <CardHeader>
               <CardTitle className="text-base">输入区</CardTitle>
-              <CardDescription>选择卡池并设置资源与目标，结果会自动更新。</CardDescription>
+              <CardDescription>选择卡池并设置资源与目标，目标仅统计当期 UP 五星。</CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
               <div className="space-y-2">
@@ -309,6 +309,19 @@ export default function Home() {
                 </Tabs>
               </div>
 
+              <div className="rounded-lg border border-zinc-800 bg-zinc-950/60 p-3">
+                <div className="text-sm font-medium text-zinc-100">卡池规则</div>
+                {banner?.ruleDoc && banner.ruleDoc.length > 0 ? (
+                  <ul className="mt-2 space-y-1 text-xs text-zinc-400">
+                    {banner.ruleDoc.map((line, index) => (
+                      <li key={`${banner.id}-rule-${index}`}>{line}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="mt-2 text-xs text-zinc-500">暂未配置规则说明</div>
+                )}
+              </div>
+
               <div className="space-y-2">
                 <div className="flex items-baseline justify-between">
                   <div className="text-sm font-medium text-zinc-100">{targetCountLabel}</div>
@@ -325,11 +338,12 @@ export default function Home() {
                   <span>1</span>
                   <span>7</span>
                 </div>
+                <div className="text-xs text-zinc-500">仅统计当期 UP 五星，不含歪卡五星。</div>
               </div>
 
               <div className="space-y-2">
                 <div className="flex items-baseline justify-between">
-                  <div className="text-sm font-medium text-zinc-100">当前{softPityLabel}进度</div>
+                  <div className="text-sm font-medium text-zinc-100">当前已垫抽数</div>
                   <div className="text-sm text-zinc-300">{userSettings.pityCounter}</div>
                 </div>
                 <Slider
@@ -342,7 +356,7 @@ export default function Home() {
                 <div className="flex items-center justify-between text-xs text-zinc-500">
                   <span>0</span>
                   <span>
-                    {hardPityLabel} {pitySystem.hardPity}
+                    {softPityLabel} {pitySystem.hardPity}
                   </span>
                 </div>
               </div>
@@ -401,7 +415,7 @@ export default function Home() {
           <Card className="lg:col-span-8">
             <CardHeader>
               <CardTitle className="text-base">结果区</CardTitle>
-              <CardDescription>概率分析与氪金指南。</CardDescription>
+              <CardDescription>输出达到所选张数 UP 五星的期望抽数与概率分析。</CardDescription>
             </CardHeader>
             <CardContent>
               <Tabs defaultValue="prob">
@@ -417,6 +431,8 @@ export default function Home() {
                       chancePercent={chanceWithinOwned}
                       targetText={targetText}
                       stableCostCNY={shoppingPlanP90.totalCostCNY}
+                      availablePulls={availablePulls}
+                      pullLabel={pullLabel}
                     />
                   </div>
 
@@ -438,14 +454,16 @@ export default function Home() {
                   <div className="mt-3">
                     <ProbChart
                       distribution={simulation.distribution}
-                      softPityStart={pitySystem.softPityStart}
                       softPityLabel={softPityLabel}
+                      hardPity={pitySystem.hardPity}
+                      hardPityLabel={hardPityLabel}
                     />
                   </div>
 
                   <div className="mt-3 rounded-xl border border-zinc-800 bg-zinc-950/60 p-3 text-sm text-zinc-200">
-                    期望抽数：<span className="font-semibold">{formatInt(simulation.expectedValue)}</span> 抽 ·
+                    期望抽数（达到所选张数 UP 五星）：<span className="font-semibold">{formatInt(simulation.expectedValue)}</span> 抽 ·
                     平均线对应{mainCurrencyName}：<span className="font-semibold">{formatInt(new Decimal(pullsP50).mul(costPerPull))}</span>
+                    <div className="mt-1 text-xs text-zinc-400">期望抽数 = Σ(抽数 × 达成概率)</div>
                   </div>
                 </TabsContent>
 

@@ -1,12 +1,23 @@
 import type { GameConfig } from "@/types/game-config";
 
+const STANDARD_RULE_DOC = [
+  "五星基础概率 1%，61 抽起软保底，70 抽必出五星。",
+  "五星中 UP 概率 50%，歪 1 次后下一次必定 UP。"
+];
+
+const MIXED_RULE_DOC = [
+  "五星基础概率 1%，61 抽起软保底，70 抽必出五星。",
+  "五星中 UP 概率 75%，歪 1 次后下一次必定 UP。",
+  "混池可定向 1 张 UP，累计歪 1 次后下一次必定为定向 UP。"
+];
+
 export const LOVE_AND_DEEPSPACE_CONFIG: GameConfig = {
   id: "love-and-deepspace",
   name: "恋与深空",
   defaultMainCurrencyId: "diamond",
   defaultPremiumCurrencyId: "gold_ticket",
   ui: {
-    targetCountLabel: "目标五星数量",
+    targetCountLabel: "目标UP五星数量",
     targetUnitName: "五星",
     softPityLabel: "小保底",
     hardPityLabel: "大保底",
@@ -65,6 +76,7 @@ export const LOVE_AND_DEEPSPACE_CONFIG: GameConfig = {
       costCurrencyId: "diamond",
       category: "new",
       type: "single_month",
+      ruleDoc: STANDARD_RULE_DOC,
       featuredRule: {
         totalUpItems: 1,
         featuredShareRate: "0.5",
@@ -104,6 +116,7 @@ export const LOVE_AND_DEEPSPACE_CONFIG: GameConfig = {
       costCurrencyId: "diamond",
       category: "rerun",
       type: "single_month",
+      ruleDoc: STANDARD_RULE_DOC,
       featuredRule: {
         totalUpItems: 1,
         featuredShareRate: "0.5",
@@ -143,6 +156,7 @@ export const LOVE_AND_DEEPSPACE_CONFIG: GameConfig = {
       costCurrencyId: "diamond",
       category: "new",
       type: "birthday",
+      ruleDoc: STANDARD_RULE_DOC,
       featuredRule: {
         totalUpItems: 1,
         featuredShareRate: "0.5",
@@ -168,6 +182,7 @@ export const LOVE_AND_DEEPSPACE_CONFIG: GameConfig = {
       costCurrencyId: "diamond",
       category: "rerun",
       type: "birthday",
+      ruleDoc: STANDARD_RULE_DOC,
       featuredRule: {
         totalUpItems: 1,
         featuredShareRate: "0.5",
@@ -192,6 +207,7 @@ export const LOVE_AND_DEEPSPACE_CONFIG: GameConfig = {
       costCurrencyId: "diamond",
       category: "new",
       type: "mixed",
+      ruleDoc: MIXED_RULE_DOC,
       featuredRule: {
         totalUpItems: 5,
         featuredShareRate: "0.75",
@@ -239,6 +255,7 @@ export const LOVE_AND_DEEPSPACE_CONFIG: GameConfig = {
       costCurrencyId: "diamond",
       category: "rerun",
       type: "mixed",
+      ruleDoc: MIXED_RULE_DOC,
       featuredRule: {
         totalUpItems: 5,
         featuredShareRate: "0.75",

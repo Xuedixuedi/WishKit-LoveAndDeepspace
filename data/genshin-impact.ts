@@ -1,12 +1,17 @@
 import type { GameConfig } from "@/types/game-config";
 
+const CHARACTER_RULE_DOC = [
+  "五星基础概率 0.6%，74 抽起软保底，90 抽必出五星。",
+  "五星中 UP 概率 50%，歪 1 次后下一次必定 UP。"
+];
+
 export const GENSHIN_IMPACT_CONFIG: GameConfig = {
   id: "genshin-impact",
   name: "原神",
   defaultMainCurrencyId: "primogem",
   defaultPremiumCurrencyId: "genesis_crystal",
   ui: {
-    targetCountLabel: "目标命座",
+    targetCountLabel: "目标UP命座",
     targetUnitName: "命",
     softPityLabel: "软保底",
     hardPityLabel: "硬保底",
@@ -50,6 +55,7 @@ export const GENSHIN_IMPACT_CONFIG: GameConfig = {
       pitySystemId: "character_5star",
       costPerPull: "160",
       costCurrencyId: "primogem",
+      ruleDoc: CHARACTER_RULE_DOC,
     },
   ],
   rechargePacks: [

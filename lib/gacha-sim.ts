@@ -24,6 +24,26 @@ export interface GachaInitialState {
   isFeaturedGuaranteed: boolean
 }
 
+export interface RandomSource {
+  next(): number
+}
+
+export const defaultRandomSource: RandomSource = {
+  next: () => Math.random()
+}
+
+export const createMulberry32 = (seed: number): RandomSource => {
+  let t = seed >>> 0
+  return {
+    next: () => {
+      t += 0x6d2b79f5
+      let r = Math.imul(t ^ (t >>> 15), t | 1)
+      r ^= r + Math.imul(r ^ (r >>> 7), r | 61)
+      return ((r ^ (r >>> 14)) >>> 0) / 4294967296
+    }
+  }
+}
+
 const clamp01 = (x: Decimal) => {
   if (x.lessThan(0)) return new Decimal(0)
   if (x.greaterThan(1)) return new Decimal(1)
@@ -83,13 +103,15 @@ const currentFiveStarRate = (config: PitySystem, pityCounter: number) => {
 export function simulateGacha(
   config: PitySystem,
   targetCount: number,
-  simRuns: number = 10000
+  simRuns: number = 10000,
+  rng: RandomSource = defaultRandomSource
 ): GachaSimulationResult {
   return simulateGachaWithState(
     config,
     targetCount,
     { pityCounter: 0, isFeaturedGuaranteed: false },
-    simRuns
+    simRuns,
+    rng
   )
 }
 
@@ -97,7 +119,8 @@ export function simulateGachaWithState(
   config: PitySystem,
   targetCount: number,
   initialState: GachaInitialState,
-  simRuns: number = 10000
+  simRuns: number = 10000,
+  rng: RandomSource = defaultRandomSource
 ): GachaSimulationResult {
   const runs = Math.max(1, Math.floor(simRuns))
   const target = Math.max(1, Math.floor(targetCount))
@@ -118,7 +141,7 @@ export function simulateGachaWithState(
       pulls += 1
 
       const rate = currentFiveStarRate(config, pityCounter)
-      const roll = Math.random()
+      const roll = rng.next()
       const isFiveStar = roll < rate.toNumber()
 
       if (!isFiveStar) {
@@ -135,7 +158,7 @@ export function simulateGachaWithState(
         continue
       }
 
-      const featuredRoll = Math.random()
+      const featuredRoll = rng.next()
       const isFeatured = featuredRoll < featuredWinRate.toNumber()
       if (isFeatured) {
         featuredCount += 1

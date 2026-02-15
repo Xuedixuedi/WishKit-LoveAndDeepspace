@@ -20,12 +20,14 @@ type ChartPoint = {
 
 export function ProbChart({
   distribution,
-  softPityStart,
-  softPityLabel
+  hardPity,
+  softPityLabel,
+  hardPityLabel
 }: {
   distribution: PullDistributionPoint[]
-  softPityStart: number | null
+  hardPity: number
   softPityLabel?: string
+  hardPityLabel?: string
 }) {
   const data: ChartPoint[] = distribution.map((d) => ({
     pulls: d.pulls,
@@ -56,6 +58,7 @@ export function ProbChart({
             axisLine={{ stroke: '#3f3f46' }}
             tickLine={{ stroke: '#3f3f46' }}
             minTickGap={16}
+            label={{ value: '抽数', position: 'insideBottom', offset: -4, fill: '#a1a1aa', fontSize: 12 }}
           />
           <YAxis
             tick={{ fill: '#a1a1aa', fontSize: 12 }}
@@ -63,6 +66,13 @@ export function ProbChart({
             tickLine={{ stroke: '#3f3f46' }}
             width={44}
             tickFormatter={(v) => `${v}%`}
+            label={{
+              value: '达成概率',
+              angle: -90,
+              position: 'insideLeft',
+              fill: '#a1a1aa',
+              fontSize: 12
+            }}
           />
           <Tooltip
             cursor={{ stroke: '#3f3f46', strokeDasharray: '3 6' }}
@@ -77,20 +87,30 @@ export function ProbChart({
             labelFormatter={(label) => `抽数：${label}`}
           />
 
-          {softPityStart !== null ? (
-            <ReferenceLine
-              x={softPityStart}
-              stroke="#fbbf24"
-              strokeOpacity={0.8}
-              strokeDasharray="6 6"
-              label={{
-                value: softPityLabel ?? '软保底',
-                position: 'insideTopRight',
-                fill: '#fde68a',
-                fontSize: 12
-              }}
-            />
-          ) : null}
+          <ReferenceLine
+            x={hardPity}
+            stroke="#fbbf24"
+            strokeOpacity={0.8}
+            strokeDasharray="6 6"
+            label={{
+              value: `${softPityLabel ?? '小保底'}：${hardPity}抽`,
+              position: 'insideTopRight',
+              fill: '#fde68a',
+              fontSize: 12
+            }}
+          />
+          <ReferenceLine
+            x={hardPity * 2}
+            stroke="#a855f7"
+            strokeOpacity={0.8}
+            strokeDasharray="6 6"
+            label={{
+              value: `${hardPityLabel ?? '大保底'}：${hardPity * 2}抽`,
+              position: 'insideTopLeft',
+              fill: '#e9d5ff',
+              fontSize: 12
+            }}
+          />
 
           <Area
             type="monotone"

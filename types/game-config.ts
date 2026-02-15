@@ -70,6 +70,7 @@ export interface Banner {
   category?: BannerCategory;
   type?: BannerType;
   featuredRule?: BannerFeaturedRule;
+  ruleDoc?: string[];
   benefits?: BannerBenefit[];
 }
 
