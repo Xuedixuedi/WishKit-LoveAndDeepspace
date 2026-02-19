@@ -11,29 +11,22 @@ import {
   YAxis
 } from 'recharts'
 
-import type { PullDistributionPoint } from '@/lib/gacha-sim'
-
 type ChartPoint = {
   pulls: number
-  probabilityPercent: number
+  chance: number
 }
 
 export function ProbChart({
-  distribution,
+  data,
   hardPity,
   softPityLabel,
   hardPityLabel
 }: {
-  distribution: PullDistributionPoint[]
+  data: ChartPoint[]
   hardPity: number
   softPityLabel?: string
   hardPityLabel?: string
 }) {
-  const data: ChartPoint[] = distribution.map((d) => ({
-    pulls: d.pulls,
-    probabilityPercent: d.probability * 100
-  }))
-
   return (
     <div className="h-72 w-full rounded-xl border border-zinc-800 bg-zinc-950/60 p-3">
       <ResponsiveContainer width="100%" height="100%">
@@ -114,7 +107,7 @@ export function ProbChart({
 
           <Area
             type="monotone"
-            dataKey="probabilityPercent"
+            dataKey="chance"
             stroke="url(#strokeGlow)"
             strokeWidth={2}
             fill="url(#goldPurple)"

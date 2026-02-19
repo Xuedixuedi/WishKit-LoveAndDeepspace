@@ -17,7 +17,14 @@ import { Slider } from '@/components/ui/slider'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { convertByDirectRate, findDirectExchangeRate } from '@/lib/currency-exchange'
 import { extractBenefitTriggerPoints } from '@/lib/banner-benefits'
-import { simulateGachaWithState } from '@/lib/gacha-sim'
+import {
+  generateChartData,
+  getMultipleUpPDF,
+  getSingleFiveStarPDF,
+  getSingleUpPDF,
+  type PityConfig,
+  type UserState
+} from '@/lib/gacha-math'
 import { optimizeShopping } from '@/lib/shopping-optimizer'
 import { useGameStore } from '@/store/use-game-store'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
@@ -58,6 +65,16 @@ const bannerCategoryLabel = (b: Banner) => {
   if (b.category === 'new') return '新卡池'
   if (b.category === 'rerun') return '复刻池'
   return '未分类'
+}
+
+const percentileFromPDF = (pdf: number[], percentile: number) => {
+  const target = Math.min(1, Math.max(0, percentile))
+  let cumulative = 0
+  for (let i = 1; i < pdf.length; i += 1) {
+    cumulative += pdf[i]
+    if (cumulative >= target) return i
+  }
+  return Math.max(0, pdf.length - 1)
 }
 
 const formatTargetCount = (target: number, unit: string) => {
@@ -136,21 +153,50 @@ export default function Home() {
     return ownedMain.add(converted ?? new Decimal(0))
   }, [debouncedOwned, debouncedOwnedPremium, gameConfig])
 
-  const simulation = React.useMemo(() => {
-    return simulateGachaWithState(
-      pitySystem,
-      targetCount,
-      {
-        pityCounter: debouncedPity,
-        isFeaturedGuaranteed: debouncedGuaranteed
-      },
-      5000
-    )
+  const mathResult = React.useMemo(() => {
+    const guaranteedAfterLoses = Math.max(0, Math.floor(pitySystem.guaranteedAfterLoses))
+    const config: PityConfig = {
+      baseRate: new Decimal(pitySystem.baseRate).toNumber(),
+      softPityStart: pitySystem.softPityStart,
+      softPityIncreasePerPull:
+        pitySystem.softPityIncreasePerPull === null
+          ? null
+          : new Decimal(pitySystem.softPityIncreasePerPull).toNumber(),
+      hardPity: Math.max(1, Math.floor(pitySystem.hardPity)),
+      featuredWinRate: new Decimal(pitySystem.featuredWinRate).toNumber(),
+      guaranteedAfterLoses
+    }
+
+    const state: UserState = {
+      pityCounter: Math.max(0, Math.floor(debouncedPity)),
+      guaranteedLoses: debouncedGuaranteed ? guaranteedAfterLoses : 0
+    }
+
+    const fiveStarPDF = getSingleFiveStarPDF(config, state)
+    const singleUpPDF = getSingleUpPDF(config, fiveStarPDF, state)
+    const finalPDF = getMultipleUpPDF(singleUpPDF, targetCount)
+    const chartData = generateChartData(finalPDF)
+
+    let expectedValue = 0
+    for (let i = 1; i < finalPDF.length; i += 1) {
+      expectedValue += finalPDF[i] * i
+    }
+
+    return {
+      chartData,
+      finalPDF,
+      expectedValue,
+      percentiles: {
+        p10: percentileFromPDF(finalPDF, 0.1),
+        p50: percentileFromPDF(finalPDF, 0.5),
+        p90: percentileFromPDF(finalPDF, 0.9)
+      }
+    }
   }, [debouncedGuaranteed, debouncedPity, pitySystem, targetCount])
 
-  const pullsP10 = simulation.percentiles.p10
-  const pullsP50 = simulation.percentiles.p50
-  const pullsP90 = simulation.percentiles.p90
+  const pullsP10 = mathResult.percentiles.p10
+  const pullsP50 = mathResult.percentiles.p50
+  const pullsP90 = mathResult.percentiles.p90
 
   const needForP50 = React.useMemo(() => {
     const total = new Decimal(pullsP50).mul(costPerPull)
@@ -216,11 +262,11 @@ export default function Home() {
 
   const chanceWithinOwned = React.useMemo(() => {
     let sum = new Decimal(0)
-    for (const p of simulation.distribution) {
-      if (p.pulls <= availablePulls) sum = sum.add(new Decimal(p.probability))
+    for (let i = 1; i < mathResult.finalPDF.length; i += 1) {
+      if (i <= availablePulls) sum = sum.add(new Decimal(mathResult.finalPDF[i]))
     }
     return sum.mul(100)
-  }, [availablePulls, simulation.distribution])
+  }, [availablePulls, mathResult.finalPDF])
 
   return (
     <main className="min-h-screen bg-[radial-gradient(1200px_circle_at_20%_10%,rgba(168,85,247,0.25),transparent_40%),radial-gradient(900px_circle_at_90%_20%,rgba(251,191,36,0.14),transparent_45%),radial-gradient(800px_circle_at_40%_90%,rgba(59,130,246,0.10),transparent_45%)]">
@@ -453,7 +499,7 @@ export default function Home() {
 
                   <div className="mt-3">
                     <ProbChart
-                      distribution={simulation.distribution}
+                      data={mathResult.chartData}
                       softPityLabel={softPityLabel}
                       hardPity={pitySystem.hardPity}
                       hardPityLabel={hardPityLabel}
@@ -461,7 +507,7 @@ export default function Home() {
                   </div>
 
                   <div className="mt-3 rounded-xl border border-zinc-800 bg-zinc-950/60 p-3 text-sm text-zinc-200">
-                    期望抽数（达到所选张数 UP 五星）：<span className="font-semibold">{formatInt(simulation.expectedValue)}</span> 抽 ·
+                    期望抽数（达到所选张数 UP 五星）：<span className="font-semibold">{formatInt(mathResult.expectedValue)}</span> 抽 ·
                     平均线对应{mainCurrencyName}：<span className="font-semibold">{formatInt(new Decimal(pullsP50).mul(costPerPull))}</span>
                     <div className="mt-1 text-xs text-zinc-400">期望抽数 = Σ(抽数 × 达成概率)</div>
                   </div>
